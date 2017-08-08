@@ -1,0 +1,4 @@
+*.log
+.idea
+.idea/vcs.xml
+*.db

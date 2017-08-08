@@ -1,0 +1,4 @@
+package: aliyun-sts-go-sdk
+import:
+- package: github.com/satori/go.uuid
+  version: v1.1.0
