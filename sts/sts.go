@@ -30,19 +30,23 @@
 package sts
 
 import (
-	"net/url"
 	"crypto/hmac"
 	"crypto/sha1"
-	"time"
+	"crypto/tls"
 	"encoding/base64"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"time"
 
 	"github.com/satori/go.uuid"
 
 	"aliyun-sts-go-sdk/general"
 )
 
+// 构造带有签名的请求URL
 func GenerateSignatureUrl() (string, error) {
-	// 构造请求URL
+	// 构造不带签名的请求URL
 	assumeUrl := "SignatureVersion=1.0"
 	assumeUrl += "&Format=JSON"
 	assumeUrl += "&Timestamp=" + url.QueryEscape(time.Now().UTC().Format("2006-01-02T15:04:05Z"))
@@ -78,4 +82,22 @@ func GenerateSignatureUrl() (string, error) {
 	assumeUrl = general.StsEndpoint + assumeUrl + "&Signature=" + url.QueryEscape(strResult)
 
 	return assumeUrl, nil
+}
+
+// 请求构造好的URL,获得授权信息
+func GetStsResponse(url string) ([]byte, error) {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+
+	resp, err := client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	return body, err
 }
