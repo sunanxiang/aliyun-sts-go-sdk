@@ -105,8 +105,6 @@ func GenerateSignatureUrl() (string, error) {
 
 // 请求构造好的URL,获得授权信息
 func GetStsResponse(url string) ([]byte, error) {
-	// var result AssumeRoleResponse
-
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -119,9 +117,6 @@ func GetStsResponse(url string) ([]byte, error) {
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
 
 	return body, err
 }
