@@ -33,6 +33,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"crypto/tls"
+	"encoding/json"
 	"encoding/base64"
 	"io/ioutil"
 	"net/http"
@@ -42,13 +43,12 @@ import (
 	"github.com/satori/go.uuid"
 
 	"aliyun-sts-go-sdk/general"
-	"encoding/json"
 )
 
 type AssumeRoleResponse struct {
-	AssumedRoleUser   AssumeRole
-	RequireId         string
-	Credentials       Credential
+	AssumedRoleUser AssumeRole
+	RequireId       string
+	Credentials     Credential
 }
 
 type AssumeRole struct {
@@ -57,10 +57,10 @@ type AssumeRole struct {
 }
 
 type Credential struct {
-	AccessKeyId       string
-    AccessKeySecret   string
-    Expiration        string
-    SecurityToken     string
+	AccessKeyId     string
+	AccessKeySecret string
+	Expiration      string
+	SecurityToken   string
 }
 
 // 构造带有签名的请求URL
