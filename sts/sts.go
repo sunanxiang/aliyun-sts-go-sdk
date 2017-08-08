@@ -42,7 +42,26 @@ import (
 	"github.com/satori/go.uuid"
 
 	"aliyun-sts-go-sdk/general"
+	"encoding/json"
 )
+
+type AssumeRoleResponse struct {
+	AssumedRoleUser   AssumeRole
+	RequireId         string
+	Credentials       Credential
+}
+
+type AssumeRole struct {
+	Arn               string
+	AssumedRoleUserId string
+}
+
+type Credential struct {
+	AccessKeyId       string
+    AccessKeySecret   string
+    Expiration        string
+    SecurityToken     string
+}
 
 // 构造带有签名的请求URL
 func GenerateSignatureUrl() (string, error) {
@@ -85,7 +104,9 @@ func GenerateSignatureUrl() (string, error) {
 }
 
 // 请求构造好的URL,获得授权信息
-func GetStsResponse(url string) ([]byte, error) {
+func GetStsResponse(url string) (AssumeRoleResponse, error) {
+	var result AssumeRoleResponse
+
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -93,11 +114,16 @@ func GetStsResponse(url string) ([]byte, error) {
 
 	resp, err := client.Get(url)
 	if err != nil {
-		return nil, err
+		return AssumeRoleResponse{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return AssumeRoleResponse{}, err
+	}
 
-	return body, err
+	err = json.Unmarshal(body, &result)
+
+	return result, err
 }
