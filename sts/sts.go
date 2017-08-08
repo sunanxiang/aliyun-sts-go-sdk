@@ -33,7 +33,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"crypto/tls"
-	"encoding/json"
 	"encoding/base64"
 	"io/ioutil"
 	"net/http"
@@ -45,10 +44,11 @@ import (
 	"aliyun-sts-go-sdk/general"
 )
 
+// 请求返回的结构体，没有使用，返回的是字节流切片
 type AssumeRoleResponse struct {
-	AssumedRoleUser AssumeRole
-	RequireId       string
-	Credentials     Credential
+	AssumedRoleUser   AssumeRole
+	RequireId         string
+	Credentials       Credential
 }
 
 type AssumeRole struct {
@@ -57,10 +57,10 @@ type AssumeRole struct {
 }
 
 type Credential struct {
-	AccessKeyId     string
-	AccessKeySecret string
-	Expiration      string
-	SecurityToken   string
+	AccessKeyId       string
+	AccessKeySecret   string
+	Expiration        string
+	SecurityToken     string
 }
 
 // 构造带有签名的请求URL
@@ -91,7 +91,7 @@ func GenerateSignatureUrl() (string, error) {
 	StringToSign := "GET" + "&" + "%2F" + "&" + url.QueryEscape(result)
 
 	// HMAC
-	hashSign := hmac.New(sha1.New, []byte(general.TempSecret + "&"))
+	hashSign := hmac.New(sha1.New, []byte(general.TempSecret+"&"))
 	hashSign.Write([]byte(StringToSign))
 
 	// 生成signature
@@ -104,8 +104,8 @@ func GenerateSignatureUrl() (string, error) {
 }
 
 // 请求构造好的URL,获得授权信息
-func GetStsResponse(url string) (AssumeRoleResponse, error) {
-	var result AssumeRoleResponse
+func GetStsResponse(url string) ([]byte, error) {
+	// var result AssumeRoleResponse
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -114,16 +114,14 @@ func GetStsResponse(url string) (AssumeRoleResponse, error) {
 
 	resp, err := client.Get(url)
 	if err != nil {
-		return AssumeRoleResponse{}, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return AssumeRoleResponse{}, err
+		return nil, err
 	}
 
-	err = json.Unmarshal(body, &result)
-
-	return result, err
+	return body, err
 }
