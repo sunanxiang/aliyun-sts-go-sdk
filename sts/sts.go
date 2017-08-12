@@ -43,14 +43,14 @@ import (
 )
 
 type AliyunStsClient struct {
-	ChildAccountKeyId    string
+	ChildAccountKeyId  string
 	ChildAccountSecret string
 	RoleAcs            string
 }
 
 func NewStsClient(key, secret, roleAcs string) *AliyunStsClient {
 	return &AliyunStsClient{
-		ChildAccountKeyId:    key,
+		ChildAccountKeyId:  key,
 		ChildAccountSecret: secret,
 		RoleAcs:            roleAcs,
 	}

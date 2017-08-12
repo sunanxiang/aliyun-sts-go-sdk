@@ -35,9 +35,9 @@ import (
 )
 
 var (
-	TempKey         = ""
-	TempSecret      = ""
-	RoleAcs         = ""
+	TempKey    = ""
+	TempSecret = ""
+	RoleAcs    = ""
 )
 
 func TestGenerateSignatureUrl(t *testing.T) {
