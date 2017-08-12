@@ -40,43 +40,34 @@ import (
 	"time"
 
 	"github.com/satori/go.uuid"
-
-	"aliyun-sts-go-sdk/general"
 )
 
-// 请求返回的结构体，没有使用，返回的是字节流切片
-type AssumeRoleResponse struct {
-	AssumedRoleUser   AssumeRole
-	RequireId         string
-	Credentials       Credential
+type AliyunStsClient struct {
+	ChildAccountKeyId    string
+	ChildAccountSecret string
+	RoleAcs            string
 }
 
-type AssumeRole struct {
-	Arn               string
-	AssumedRoleUserId string
+func NewStsClient(key, secret, roleAcs string) *AliyunStsClient {
+	return &AliyunStsClient{
+		ChildAccountKeyId:    key,
+		ChildAccountSecret: secret,
+		RoleAcs:            roleAcs,
+	}
 }
 
-type Credential struct {
-	AccessKeyId       string
-	AccessKeySecret   string
-	Expiration        string
-	SecurityToken     string
-}
-
-// 构造带有签名的请求URL
-func GenerateSignatureUrl() (string, error) {
-	// 构造不带签名的请求URL
+func (cli *AliyunStsClient) GenerateSignatureUrl(sessionName, durationSeconds string) (string, error) {
 	assumeUrl := "SignatureVersion=1.0"
 	assumeUrl += "&Format=JSON"
 	assumeUrl += "&Timestamp=" + url.QueryEscape(time.Now().UTC().Format("2006-01-02T15:04:05Z"))
-	assumeUrl += "&RoleArn=" + url.QueryEscape(general.RoleAcs)
-	assumeUrl += "&RoleSessionName=client"
-	assumeUrl += "&AccessKeyId=" + general.TempKey
+	assumeUrl += "&RoleArn=" + url.QueryEscape(cli.RoleAcs)
+	assumeUrl += "&RoleSessionName=" + sessionName
+	assumeUrl += "&AccessKeyId=" + cli.ChildAccountKeyId
 	assumeUrl += "&SignatureMethod=HMAC-SHA1"
 	assumeUrl += "&Version=2015-04-01"
 	assumeUrl += "&Action=AssumeRole"
 	assumeUrl += "&SignatureNonce=" + uuid.NewV4().String()
-	assumeUrl += "&DurationSeconds=" + general.DurationSeconds
+	assumeUrl += "&DurationSeconds=" + durationSeconds
 
 	// 解析成V type
 	signToString, err := url.ParseQuery(assumeUrl)
@@ -91,20 +82,21 @@ func GenerateSignatureUrl() (string, error) {
 	StringToSign := "GET" + "&" + "%2F" + "&" + url.QueryEscape(result)
 
 	// HMAC
-	hashSign := hmac.New(sha1.New, []byte(general.TempSecret+"&"))
+	hashSign := hmac.New(sha1.New, []byte(cli.ChildAccountSecret+"&"))
 	hashSign.Write([]byte(StringToSign))
 
 	// 生成signature
-	strResult := base64.StdEncoding.EncodeToString(hashSign.Sum(nil))
+	signature := base64.StdEncoding.EncodeToString(hashSign.Sum(nil))
 
 	// Url 添加signature
-	assumeUrl = general.StsEndpoint + assumeUrl + "&Signature=" + url.QueryEscape(strResult)
+	assumeUrl = "https://sts.aliyuncs.com/?" + assumeUrl + "&Signature=" + url.QueryEscape(signature)
 
 	return assumeUrl, nil
 }
 
 // 请求构造好的URL,获得授权信息
-func GetStsResponse(url string) ([]byte, error) {
+// TODO: 安全认证 HTTPS
+func (cli *AliyunStsClient) GetStsResponse(url string) ([]byte, error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}

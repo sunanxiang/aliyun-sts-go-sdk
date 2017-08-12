@@ -34,16 +34,24 @@ import (
 	"testing"
 )
 
+var (
+	TempKey         = ""
+	TempSecret      = ""
+	RoleAcs         = ""
+)
+
 func TestGenerateSignatureUrl(t *testing.T) {
-	url, err := GenerateSignatureUrl()
+	client := NewStsClient(TempKey, TempSecret, RoleAcs)
+
+	url, err := client.GenerateSignatureUrl("client", "1800")
 	if err != nil {
-		t.Error("Signature Error:", err)
+		t.Error(err)
 	}
 
-	result, err := GetStsResponse(url)
+	data, err := client.GetStsResponse(url)
 	if err != nil {
-		t.Error("Response Error:", err)
+		t.Error(err)
 	}
 
-	log.Println("result:", string(result))
+	log.Println("result:", string(data))
 }
